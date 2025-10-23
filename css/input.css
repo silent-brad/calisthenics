@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles that complement Pico.css */
+/* Custom styles for TailwindCSS */
 .tag {
   @apply inline-block px-2 py-1 text-sm bg-gray-200 text-gray-700 rounded-full mr-1 mb-1 no-underline;
 }

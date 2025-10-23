@@ -10,7 +10,7 @@ module.exports = {
   },
   plugins: [],
   corePlugins: {
-    // Disable some core plugins to avoid conflicts with Pico.css
-    preflight: false,
+    // Enable all core plugins since we're not using Pico.css
+    preflight: true,
   }
 }

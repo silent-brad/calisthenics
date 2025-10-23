@@ -1,12 +1,12 @@
 # Calisthenics — My Opinionated Static Blog Template
 
-A static blog built with [Hakyll](https://jaspervdj.be/hakyll/) (Haskell), featuring blog posts written in [Typst](https://typst.app/) and styled with [Pico.css](https://picocss.com) and [TailwindCSS](https://tailwindcss.com).
+A static blog built with [Hakyll](https://jaspervdj.be/hakyll/) (Haskell), featuring blog posts written in [Typst](https://typst.app/) and styled with [TailwindCSS](https://tailwindcss.com).
 
 ## Features
 
 - **Hakyll static site generator** - Fast, flexible Haskell-based site generation
 - **Typst blog posts** - Write posts in Typst markup instead of Markdown
-- **Modern styling** - Combination of Pico.css and TailwindCSS for clean, responsive design
+- **Modern styling** - TailwindCSS for clean, responsive design
 - **Nix flakes** - Reproducible development environment
 - **GitHub Pages ready** - Builds to `docs/` directory for easy deployment
 
@@ -104,10 +104,9 @@ The site builds to the `docs/` directory, making it ready for GitHub Pages deplo
 
 ### Styling
 
-- **Pico.css** provides the base styling (loaded from CDN)
-- **TailwindCSS** is used for additional utility classes
-- Custom styles in `css/input.css` are processed by Tailwind
-- The `tailwind.config.js` has `preflight: false` to avoid conflicts with Pico.css
+- **TailwindCSS** provides all styling through utility classes and custom components
+- Custom styles in `css/input.css` are processed by TailwindCSS
+- The `tailwind.config.js` configures the build process
 
 ### Templates
 

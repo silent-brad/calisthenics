@@ -2,11 +2,8 @@
 
 # Simple build script for testing without Nix flakes
 
-echo "Installing npm dependencies..."
-npm install
-
 echo "Building CSS..."
-npx tailwindcss -i ./css/input.css -o ./css/style.css
+tailwindcss -i ./css/input.css -o ./css/style.css
 
 echo "The site structure is ready!"
 echo "To build with Hakyll, you'll need:"

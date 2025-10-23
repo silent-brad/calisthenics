@@ -28,9 +28,7 @@
           haskellPackages.hakyll
           haskellPackages.haskell-language-server
           typst
-          nodejs
-          nodePackages.tailwindcss
-          nodePackages.npm
+          tailwindcss
         ];
 
         # Site builder script
