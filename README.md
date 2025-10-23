@@ -37,11 +37,6 @@ A static blog built with [Hakyll](https://jaspervdj.be/hakyll/) (Haskell), featu
    cabal run site watch
    ```
 
-4. **Build TailwindCSS (in another terminal):**
-   ```bash
-   npm run build-css
-   ```
-
 The site will be available at `http://localhost:8000`
 
 ### Project Structure
@@ -97,8 +92,6 @@ The site builds to the `docs/` directory, making it ready for GitHub Pages deplo
 - `cabal run site build` - Build site manually
 - `cabal run site watch` - Watch for changes and rebuild
 - `cabal run site clean` - Clean build artifacts
-- `npm run build-css` - Build TailwindCSS (watch mode)
-- `npm run build-css-prod` - Build TailwindCSS (production, minified)
 
 ## Customization
 

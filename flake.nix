@@ -29,6 +29,7 @@
           haskellPackages.haskell-language-server
           typst
           tailwindcss
+          pandoc
         ];
 
         # Site builder script
