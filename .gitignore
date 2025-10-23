@@ -1,3 +1,8 @@
+result
+
+docs
+_cache
+
 dist
 dist-*
 cabal-dev
