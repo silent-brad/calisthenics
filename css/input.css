@@ -3,56 +3,56 @@
 @tailwind utilities;
 
 @font-face {
-  src: url('/assets/fonts/chancery/apple-chancery-webfont.ttf');
+  src: url('/fonts/chancery/apple-chancery-webfont.ttf');
   font-family: 'Chancery';
   font-weight: 400;
 }
 
 @font-face {
   font-family: 'Athelas';
-  src: url('/assets/fonts/athelas/Athelas-Regular.ttf');
+  src: url('/fonts/athelas/Athelas-Regular.ttf');
   font-weight: 400;
 }
 @font-face {
   font-family: 'Athelas Bold';
-  src: url('/assets/fonts/athelas/Athelas-Bold.ttf');
+  src: url('/fonts/athelas/Athelas-Bold.ttf');
   font-weight: 700;
 }
 @font-face {
   font-family: 'Athelas Italic';
-  src: url('/assets/fonts/athelas/Athelas-Italic.ttf');
+  src: url('/fonts/athelas/Athelas-Italic.ttf');
   font-weight: 400;
 }
 @font-face {
   font-family: 'Athelas Bold Italic';
-  src: url('/assets/fonts/athelas/Athelas-BoldItalic.ttf');
+  src: url('/fonts/athelas/Athelas-BoldItalic.ttf');
   font-weight: 700;
 }
 
 @font-face {
   font-family: 'Junicode';
-  src: url('/assets/fonts/junicode/Junicode.ttf');
+  src: url('/fonts/junicode/Junicode.ttf');
   font-weight: 400;
 }
 @font-face {
   font-family: 'Junicode Bold';
-  src: url('/assets/fonts/junicode/Junicode-Bold.ttf');
+  src: url('/fonts/junicode/Junicode-Bold.ttf');
   font-weight: 700;
 }
 @font-face {
   font-family: 'Junicode Italic';
-  src: url('/assets/fonts/junicode/Junicode-Italic.ttf');
+  src: url('/fonts/junicode/Junicode-Italic.ttf');
   font-weight: 400;
 }
 @font-face {
   font-family: 'Junicode Bold Italic';
-  src: url('/assets/fonts/junicode/Junicode-BoldItalic.ttf');
+  src: url('/fonts/junicode/Junicode-BoldItalic.ttf');
   font-weight: 700;
 }
 
 @font-face {
   font-family: 'Fira Code';
-  src: url('/assets/fonts/firacode/static/FiraCode-Regular.ttf');
+  src: url('/fonts/firacode/static/FiraCode-Regular.ttf');
   font-weight: 400;
   font-style: normal;
 }
