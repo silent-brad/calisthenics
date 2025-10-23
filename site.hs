@@ -87,7 +87,7 @@ main = hakyllWith config $ do
 
     -- Process Typst blog posts  
     match "posts/*.typ" $ do
-        route $ setExtension "html"
+        route $ gsubRoute "posts/" (const "") `composeRoutes` setExtension "html"
         compile $ do
             let postCtxWithTags = tagsField "tags" tags `mappend` postCtx
             pandocTypstCompilerWithMeta
@@ -155,9 +155,32 @@ main = hakyllWith config $ do
 
 postCtx :: Context String
 postCtx =
-    dateField "date" "%B %e, %Y" `mappend`
+    dateFieldFromMetadata "date" "%B %e, %Y" `mappend`
     tagsFieldFromMetadata `mappend`
     defaultContext
+
+dateFieldFromMetadata :: String -> String -> Context String
+dateFieldFromMetadata key format = field key $ \item -> do
+    metadata <- getMetadata (itemIdentifier item)
+    case lookupString "date" metadata of
+        Just dateStr -> do
+            -- Parse simple YYYY-MM-DD format and format it nicely
+            case parseSimpleDate dateStr of
+                Just formattedDate -> return formattedDate
+                Nothing -> return dateStr
+        Nothing -> return ""
+  where
+    parseSimpleDate dateStr = 
+        case words (map (\c -> if c == '-' then ' ' else c) dateStr) of
+            [year, month, day] -> Just $ formatDate (read month) (read day) (read year)
+            _ -> Nothing
+    
+    formatDate :: Int -> Int -> Int -> String
+    formatDate month day year = 
+        monthNames !! (month - 1) ++ " " ++ show day ++ ", " ++ show year
+    
+    monthNames = ["January", "February", "March", "April", "May", "June",
+                  "July", "August", "September", "October", "November", "December"]
 
 tagsFieldFromMetadata :: Context String
 tagsFieldFromMetadata = field "tags" $ \item -> do
