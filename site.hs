@@ -9,6 +9,10 @@ import           Data.Map (Map)
 import qualified Data.Map as M
 import           Data.List (stripPrefix)
 import           Data.Maybe (fromMaybe)
+import           Data.Time.Clock (UTCTime)
+import           Data.Time.Format (parseTimeM, defaultTimeLocale)
+import           Data.Ord (Down(..), comparing)
+import           Data.List (sortBy)
 
 --------------------------------------------------------------------------------
 -- Configuration
@@ -52,7 +56,13 @@ parseMetadata content = M.fromList $ map parseLine $ lines content
 makeItemWithMetadata :: String -> Map String String -> Compiler (Item String)
 makeItemWithMetadata html metaMap = do
     identifier <- getUnderlying
+    
+    -- Create a new context with the metadata
     let item = Item identifier html
+        
+    -- Store the raw metadata for later use
+    _ <- saveSnapshot "raw-metadata" item
+    
     return item
 
 --------------------------------------------------------------------------------
@@ -99,7 +109,7 @@ main = hakyllWith config $ do
     create ["archive.html"] $ do
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "posts/*.typ"
+            posts <- recentFirstFromMetadata =<< loadAll "posts/*.typ"
             let archiveCtx =
                     listField "posts" postCtx (return posts) `mappend`
                     constField "title" "Archives"            `mappend`
@@ -115,7 +125,7 @@ main = hakyllWith config $ do
         let title = "Posts tagged \"" ++ tag ++ "\""
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll pattern
+            posts <- recentFirstFromMetadata =<< loadAll pattern
             let ctx = constField "title" title
                       `mappend` listField "posts" postCtx (return posts)
                       `mappend` defaultContext
@@ -129,7 +139,7 @@ main = hakyllWith config $ do
     match "index.html" $ do
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "posts/*.typ"
+            posts <- recentFirstFromMetadata =<< loadAll "posts/*.typ"
             let indexCtx =
                     listField "posts" postCtx (return posts) `mappend`
                     defaultContext
@@ -156,13 +166,30 @@ main = hakyllWith config $ do
 postCtx :: Context String
 postCtx =
     dateFieldFromMetadata "date" "%B %e, %Y" `mappend`
+    utcDateFieldFromMetadata `mappend`
     tagsFieldFromMetadata `mappend`
     defaultContext
 
+-- Custom field that provides UTC time from metadata
+utcDateFieldFromMetadata :: Context String
+utcDateFieldFromMetadata = field "published" $ \item -> do
+    let identifier = itemIdentifier item
+        metaPath = replaceExtension (toFilePath identifier) "meta"
+    metaItem <- load (fromFilePath metaPath)
+    let metaContent = itemBody metaItem
+        metaMap = parseMetadata metaContent
+    case M.lookup "date" metaMap of
+        Just dateStr -> return $ dateStr ++ "T00:00:00Z"  -- Add time component for UTC
+        Nothing -> return "1900-01-01T00:00:00Z"  -- Default date
+
 dateFieldFromMetadata :: String -> String -> Context String
 dateFieldFromMetadata key format = field key $ \item -> do
-    metadata <- getMetadata (itemIdentifier item)
-    case lookupString "date" metadata of
+    let identifier = itemIdentifier item
+        metaPath = replaceExtension (toFilePath identifier) "meta"
+    metaItem <- load (fromFilePath metaPath)
+    let metaContent = itemBody metaItem
+        metaMap = parseMetadata metaContent
+    case M.lookup "date" metaMap of
         Just dateStr -> do
             -- Parse simple YYYY-MM-DD format and format it nicely
             case parseSimpleDate dateStr of
@@ -182,10 +209,38 @@ dateFieldFromMetadata key format = field key $ \item -> do
     monthNames = ["January", "February", "March", "April", "May", "June",
                   "July", "August", "September", "October", "November", "December"]
 
+-- Sort posts by date from metadata (most recent first)
+recentFirstFromMetadata :: [Item String] -> Compiler [Item String]
+recentFirstFromMetadata items = do
+    itemsWithDates <- mapM getItemDate items
+    return $ map snd $ sortBy (comparing $ Down . fst) (itemsWithDates :: [(UTCTime, Item String)])
+  where
+    defaultUTCTime = read "1900-01-01 00:00:00 UTC" :: UTCTime
+    
+    getItemDate :: Item String -> Compiler (UTCTime, Item String)
+    getItemDate item = do
+        let identifier = itemIdentifier item
+            metaPath = replaceExtension (toFilePath identifier) "meta"
+        metaItem <- load (fromFilePath metaPath)
+        let metaContent = itemBody metaItem
+            metaMap = parseMetadata metaContent
+        case M.lookup "date" metaMap of
+            Just dateStr -> 
+                case parseTimeM True defaultTimeLocale "%Y-%m-%d" dateStr :: Maybe UTCTime of
+                    Just utcTime -> return (utcTime, item)
+                    Nothing -> return (defaultUTCTime, item)
+            Nothing -> return (defaultUTCTime, item)
+    
+
+
 tagsFieldFromMetadata :: Context String
 tagsFieldFromMetadata = field "tags" $ \item -> do
-    metadata <- getMetadata (itemIdentifier item)
-    case lookupString "tags" metadata of
+    let identifier = itemIdentifier item
+        metaPath = replaceExtension (toFilePath identifier) "meta"
+    metaItem <- load (fromFilePath metaPath)
+    let metaContent = itemBody metaItem
+        metaMap = parseMetadata metaContent
+    case M.lookup "tags" metaMap of
         Just tagsStr -> return $ unwords $ map (\tag -> "<a href=\"/tags/" ++ makeUrl tag ++ "\" class=\"tag\">#" ++ tag ++ "</a>") (splitTags tagsStr)
         Nothing -> return ""
   where
