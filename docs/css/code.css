@@ -12,6 +12,14 @@ code {
 pre > code {
 	 display: block;
 }
+
+.js {
+  @apply language-javascript;
+}
+.rust {
+  @apply language-rust;
+}
+
 figure.highlight {
   margin: 1em 0;
   border-radius: 5px;
