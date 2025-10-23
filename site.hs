@@ -4,15 +4,14 @@ import           Data.Monoid (mappend)
 import           Hakyll
 import           System.Process (readProcess)
 import           System.FilePath (replaceExtension, takeBaseName)
-import           Control.Monad (liftM)
+import           Control.Monad (liftM, filterM, forM_)
 import           Data.Map (Map)
 import qualified Data.Map as M
-import           Data.List (stripPrefix)
+import           Data.List (stripPrefix, sortBy, nub)
 import           Data.Maybe (fromMaybe)
 import           Data.Time.Clock (UTCTime)
 import           Data.Time.Format (parseTimeM, defaultTimeLocale)
 import           Data.Ord (Down(..), comparing)
-import           Data.List (sortBy)
 
 --------------------------------------------------------------------------------
 -- Configuration
@@ -65,6 +64,29 @@ makeItemWithMetadata html metaMap = do
     
     return item
 
+-- Helper functions for tags
+splitOnComma :: String -> [String]
+splitOnComma str = case break (== ',') str of
+    (chunk, []) -> [chunk]
+    (chunk, _:rest) -> chunk : splitOnComma rest
+
+trimSpaces :: String -> String  
+trimSpaces = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
+
+makeTagUrl :: String -> String
+makeTagUrl = map (\c -> if c == ' ' then '-' else c)
+
+hasTag :: String -> Item String -> Compiler Bool
+hasTag targetTag item = do
+    let identifier = itemIdentifier item
+        metaPath = replaceExtension (toFilePath identifier) "meta"
+    metaItem <- load (fromFilePath metaPath)
+    let metaContent = itemBody metaItem
+        metaMap = parseMetadata metaContent
+    case M.lookup "tags" metaMap of
+        Just tagsStr -> return $ targetTag `elem` map trimSpaces (splitOnComma tagsStr)
+        Nothing -> return False
+
 --------------------------------------------------------------------------------
 -- Main Site Generation
 --------------------------------------------------------------------------------
@@ -92,14 +114,31 @@ main = hakyllWith config $ do
     match "posts/*.meta" $ do
         compile getResourceBody
 
-    -- Create tags
-    tags <- buildTags "posts/*.typ" (fromCapture "tags/*.html")
+    -- Create individual tag pages (hardcoded for now)
+    let allTags = ["programming", "haskell", "fitness", "calisthenics"]  -- TODO: extract from metadata
+    
+    -- Create individual tag pages
+    forM_ allTags $ \tag -> do
+        let tagRoute = "tags/" ++ makeTagUrl tag ++ ".html"
+        create [fromFilePath tagRoute] $ do
+            route idRoute
+            compile $ do
+                posts <- loadAll "posts/*.typ"
+                taggedPosts <- filterM (hasTag tag) posts
+                sortedPosts <- recentFirstFromMetadata taggedPosts
+                let ctx = constField "title" ("Posts tagged \"" ++ tag ++ "\"")
+                          `mappend` listField "posts" postCtx (return sortedPosts)
+                          `mappend` defaultContext
+                makeItem ""
+                    >>= loadAndApplyTemplate "templates/tag.html" ctx
+                    >>= loadAndApplyTemplate "templates/default.html" ctx
+                    >>= relativizeUrls
 
     -- Process Typst blog posts  
     match "posts/*.typ" $ do
         route $ gsubRoute "posts/" (const "") `composeRoutes` setExtension "html"
         compile $ do
-            let postCtxWithTags = tagsField "tags" tags `mappend` postCtx
+            let postCtxWithTags = postCtx
             pandocTypstCompilerWithMeta
                 >>= loadAndApplyTemplate "templates/post.html"    postCtxWithTags
                 >>= loadAndApplyTemplate "templates/default.html" postCtxWithTags
@@ -120,20 +159,7 @@ main = hakyllWith config $ do
                 >>= loadAndApplyTemplate "templates/default.html" archiveCtx
                 >>= relativizeUrls
 
-    -- Tags pages
-    tagsRules tags $ \tag pattern -> do
-        let title = "Posts tagged \"" ++ tag ++ "\""
-        route idRoute
-        compile $ do
-            posts <- recentFirstFromMetadata =<< loadAll pattern
-            let ctx = constField "title" title
-                      `mappend` listField "posts" postCtx (return posts)
-                      `mappend` defaultContext
 
-            makeItem ""
-                >>= loadAndApplyTemplate "templates/tag.html" ctx
-                >>= loadAndApplyTemplate "templates/default.html" ctx
-                >>= relativizeUrls
 
     -- Index page
     match "index.html" $ do
@@ -244,11 +270,11 @@ tagsFieldFromMetadata = field "tags" $ \item -> do
         Just tagsStr -> return $ unwords $ map (\tag -> "<a href=\"/tags/" ++ makeUrl tag ++ "\" class=\"tag\">#" ++ tag ++ "</a>") (splitTags tagsStr)
         Nothing -> return ""
   where
-    splitTags tagsStr = map trim $ splitOn ',' tagsStr
+    splitTags tagsStr = map trimSpaces' $ splitOn ',' tagsStr
     splitOn delim str = case break (== delim) str of
         (chunk, []) -> [chunk]
         (chunk, _:rest) -> chunk : splitOn delim rest
-    trim = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
+    trimSpaces' = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
     makeUrl tag = map (\c -> if c == ' ' then '-' else c) tag
 
 tagCtx :: Context String
