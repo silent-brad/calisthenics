@@ -87,6 +87,22 @@ hasTag targetTag item = do
         Just tagsStr -> return $ targetTag `elem` map trimSpaces (splitOnComma tagsStr)
         Nothing -> return False
 
+-- Extract all unique tags from all metadata files
+extractAllTags :: Rules [String]
+extractAllTags = do
+    metaFiles <- getMatches "posts/*.meta"
+    allTagsLists <- preprocess $ mapM extractTagsFromFile metaFiles
+    let allTags = nub $ concat allTagsLists
+    return allTags
+  where
+    extractTagsFromFile :: Identifier -> IO [String]
+    extractTagsFromFile metaId = do
+        content <- readFile (toFilePath metaId)
+        let metaMap = parseMetadata content
+        case M.lookup "tags" metaMap of
+            Just tagsStr -> return $ map trimSpaces (splitOnComma tagsStr)
+            Nothing -> return []
+
 --------------------------------------------------------------------------------
 -- Main Site Generation
 --------------------------------------------------------------------------------
@@ -114,10 +130,9 @@ main = hakyllWith config $ do
     match "posts/*.meta" $ do
         compile getResourceBody
 
-    -- Create individual tag pages (hardcoded for now)
-    let allTags = ["programming", "haskell", "fitness", "calisthenics"]  -- TODO: extract from metadata
+    -- Create individual tag pages for dynamically extracted tags
+    allTags <- extractAllTags
     
-    -- Create individual tag pages
     forM_ allTags $ \tag -> do
         let tagRoute = "tags/" ++ makeTagUrl tag ++ ".html"
         create [fromFilePath tagRoute] $ do
@@ -158,8 +173,6 @@ main = hakyllWith config $ do
                 >>= loadAndApplyTemplate "templates/archive.html" archiveCtx
                 >>= loadAndApplyTemplate "templates/default.html" archiveCtx
                 >>= relativizeUrls
-
-
 
     -- Index page
     match "index.html" $ do
