@@ -1,0 +1,1 @@
+@tailwind base;@tailwind components;@tailwind utilities;.tag{@apply inline-block px-2 py-1 text-sm bg-gray-200 text-gray-700 rounded-full mr-1 mb-1 no-underline}.tag:hover{@apply bg-gray-300}pre{@apply overflow-x-auto}.prose{@apply max-w-none}@media (prefers-color-scheme:dark){.tag{@apply bg-gray-700 text-gray-200}.tag:hover{@apply bg-gray-600}}
